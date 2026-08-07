@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 
@@ -8,7 +10,9 @@ const features = [
   "Search across everything, archive what's done",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
       <main className="flex w-full max-w-2xl flex-col items-center gap-10 py-24 text-center">
@@ -26,16 +30,26 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" disabled>
-            Get Started
-          </Button>
-          <Button size="lg" variant="outline" disabled>
-            Sign In
-          </Button>
+          {userId ? (
+            <Button size="lg" nativeButton={false} render={<Link href="/dashboard" />}>
+              Go to Dashboard
+            </Button>
+          ) : (
+            <>
+              <Button size="lg" nativeButton={false} render={<Link href="/sign-up" />}>
+                Get Started
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/sign-in" />}
+              >
+                Sign In
+              </Button>
+            </>
+          )}
         </div>
-        <p className="-mt-6 text-xs text-zinc-500 dark:text-zinc-500">
-          Auth is coming in the next milestone — buttons will go live soon.
-        </p>
 
         <ul className="flex w-full flex-col gap-3 text-left">
           {features.map((feature) => (
