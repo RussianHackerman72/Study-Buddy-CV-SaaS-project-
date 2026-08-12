@@ -28,6 +28,7 @@ import {
 import { taskFormSchema, type TaskFormValues } from "@/lib/validations/task";
 import { createTask, updateTask, type Task } from "@/lib/api/tasks";
 import { priorityLabels, statusLabels } from "./task-labels";
+import { SubtaskSection } from "./subtask-section";
 
 function toDateInputValue(dueDate: string | null) {
   if (!dueDate) return "";
@@ -176,6 +177,10 @@ export function TaskFormDialog({
               )}
             />
           </div>
+
+          {task && (
+            <SubtaskSection key={task.id} taskId={task.id} initialSubtasks={task.subtasks} />
+          )}
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting || mutation.isPending}>
