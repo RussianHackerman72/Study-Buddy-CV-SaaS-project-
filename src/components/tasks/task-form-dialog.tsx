@@ -136,7 +136,9 @@ export function TaskFormDialog({
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue>
+                        {(value: keyof typeof priorityLabels) => priorityLabels[value]}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(priorityLabels).map(([value, label]) => (
@@ -159,7 +161,9 @@ export function TaskFormDialog({
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue>
+                      {(value: keyof typeof statusLabels) => statusLabels[value]}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(statusLabels).map(([value, label]) => (

@@ -25,7 +25,7 @@ export function TaskSortSelect({
   return (
     <Select value={value} onValueChange={(value) => onChange(value as SortOption)}>
       <SelectTrigger className="w-40">
-        <SelectValue />
+        <SelectValue>{(value: SortOption) => sortLabels[value]}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {Object.entries(sortLabels).map(([value, label]) => (
