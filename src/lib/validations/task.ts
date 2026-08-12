@@ -21,3 +21,15 @@ export const updateTaskSchema = z.object({
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+
+// Client-side form schema: keeps dueDate as a plain string (from an <input type="date">)
+// instead of coercing to Date, so it maps directly onto controlled form fields.
+export const taskFormSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200),
+  description: z.string().trim().max(5000).optional(),
+  dueDate: z.string().optional(),
+  priority: priorityEnum,
+  status: statusEnum,
+});
+
+export type TaskFormValues = z.infer<typeof taskFormSchema>;
