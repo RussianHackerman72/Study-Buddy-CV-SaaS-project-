@@ -29,6 +29,7 @@ import { taskFormSchema, type TaskFormValues } from "@/lib/validations/task";
 import { createTask, updateTask, type Task } from "@/lib/api/tasks";
 import { priorityLabels, statusLabels } from "./task-labels";
 import { SubtaskSection } from "./subtask-section";
+import { TaskTagsSection } from "./task-tags-section";
 
 function toDateInputValue(dueDate: string | null) {
   if (!dueDate) return "";
@@ -179,7 +180,10 @@ export function TaskFormDialog({
           </div>
 
           {task && (
-            <SubtaskSection key={task.id} taskId={task.id} initialSubtasks={task.subtasks} />
+            <>
+              <SubtaskSection key={task.id} taskId={task.id} initialSubtasks={task.subtasks} />
+              <TaskTagsSection key={task.id} taskId={task.id} initialTags={task.tags} />
+            </>
           )}
 
           <DialogFooter>

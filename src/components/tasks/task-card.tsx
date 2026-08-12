@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Task } from "@/lib/api/tasks";
 import { priorityBadgeClass, priorityLabels, statusBadgeClass, statusLabels } from "./task-labels";
+import { TagBadge } from "./tag-badge";
 
 export function TaskCard({
   task,
@@ -50,6 +51,9 @@ export function TaskCard({
               {completedSubtasks}/{task.subtasks.length} subtasks
             </span>
           )}
+          {task.tags.map(({ tag }) => (
+            <TagBadge key={tag.id} name={tag.name} color={tag.color} />
+          ))}
         </div>
       </div>
 

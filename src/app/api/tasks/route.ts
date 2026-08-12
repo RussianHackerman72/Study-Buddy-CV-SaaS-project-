@@ -12,7 +12,9 @@ export async function GET(request: Request) {
   const user = await getOrCreateUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const sort = new URL(request.url).searchParams.get("sort");
+  const searchParams = new URL(request.url).searchParams;
+  const sort = searchParams.get("sort");
+  const tagId = searchParams.get("tagId");
 
   const orderBy: Prisma.TaskOrderByWithRelationInput[] =
     sort === "priority"
@@ -22,7 +24,11 @@ export async function GET(request: Request) {
         : [{ createdAt: "desc" }];
 
   const tasks = await prisma.task.findMany({
-    where: { userId: user.id, archived: false },
+    where: {
+      userId: user.id,
+      archived: false,
+      ...(tagId ? { tags: { some: { tagId } } } : {}),
+    },
     include: { subtasks: true, tags: { include: { tag: true } } },
     orderBy,
   });
