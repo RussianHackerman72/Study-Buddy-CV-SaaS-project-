@@ -9,9 +9,16 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   globalSetup: "./e2e/global.setup.ts",
+  // The app's DB is a Neon serverless instance in ap-southeast-1; the first query after
+  // a cold start (which every fresh CI run hits) can take several seconds from a US
+  // runner, well past Playwright's default 5s assertion timeout.
+  expect: {
+    timeout: 20_000,
+  },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
+    actionTimeout: 15_000,
   },
   projects: [
     {
