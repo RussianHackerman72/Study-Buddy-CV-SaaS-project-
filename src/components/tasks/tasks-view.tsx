@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { PlusIcon, ArchiveIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchTasks, type SortOption, type Task } from "@/lib/api/tasks";
+import { fetchTasks, updateTask, type SortOption, type Task } from "@/lib/api/tasks";
 import { TaskCard } from "./task-card";
 import { TaskFormDialog } from "./task-form-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
@@ -24,6 +26,8 @@ export function TasksView() {
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
+  const queryClient = useQueryClient();
+
   const {
     data: tasks,
     isLoading,
@@ -31,6 +35,15 @@ export function TasksView() {
   } = useQuery({
     queryKey: ["tasks", sort, tagId, debouncedSearch],
     queryFn: () => fetchTasks({ sort, tagId, q: debouncedSearch }),
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: (task: Task) => updateTask(task.id, { archived: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task archived");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 
   function openCreateForm() {
@@ -52,6 +65,14 @@ export function TasksView() {
         <div className="flex items-center gap-2">
           <TagFilterSelect value={tagId} onChange={setTagId} />
           <TaskSortSelect value={sort} onChange={setSort} />
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href="/dashboard/archive" />}
+          >
+            <ArchiveIcon className="size-4" />
+            Archive
+          </Button>
           <Button onClick={openCreateForm}>
             <PlusIcon className="size-4" />
             New task
@@ -102,6 +123,7 @@ export function TasksView() {
               task={task}
               onEdit={() => openEditForm(task)}
               onDelete={() => setDeletingTask(task)}
+              onArchive={() => archiveMutation.mutate(task)}
             />
           ))}
         </div>

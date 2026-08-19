@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const sort = searchParams.get("sort");
   const tagId = searchParams.get("tagId");
   const q = searchParams.get("q")?.trim();
+  const archived = searchParams.get("archived") === "true";
 
   const orderBy: Prisma.TaskOrderByWithRelationInput[] =
     sort === "priority"
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   const tasks = await prisma.task.findMany({
     where: {
       userId: user.id,
-      archived: false,
+      archived,
       ...(tagId ? { tags: { some: { tagId } } } : {}),
       ...(q
         ? {

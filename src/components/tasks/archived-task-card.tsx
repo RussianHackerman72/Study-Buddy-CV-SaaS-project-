@@ -1,33 +1,23 @@
 "use client";
 
 import { format } from "date-fns";
-import { MoreVertical, Pencil, Trash2, Archive, CalendarIcon } from "lucide-react";
+import { ArchiveRestore, Trash2, CalendarIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { Task } from "@/lib/api/tasks";
 import { priorityBadgeClass, priorityLabels, statusBadgeClass, statusLabels } from "./task-labels";
 import { TagBadge } from "./tag-badge";
 
-export function TaskCard({
+export function ArchivedTaskCard({
   task,
-  onEdit,
+  onUnarchive,
   onDelete,
-  onArchive,
 }: {
   task: Task;
-  onEdit: () => void;
+  onUnarchive: () => void;
   onDelete: () => void;
-  onArchive: () => void;
 }) {
-  const completedSubtasks = task.subtasks.filter((subtask) => subtask.completed).length;
-
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex min-w-0 flex-col gap-1.5">
@@ -48,41 +38,22 @@ export function TaskCard({
               {format(new Date(task.dueDate), "MMM d, yyyy")}
             </span>
           )}
-          {task.subtasks.length > 0 && (
-            <span className="text-xs text-zinc-500 dark:text-zinc-500">
-              {completedSubtasks}/{task.subtasks.length} subtasks
-            </span>
-          )}
           {task.tags.map(({ tag }) => (
             <TagBadge key={tag.id} name={tag.name} color={tag.color} />
           ))}
         </div>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon-sm" className="shrink-0">
-              <MoreVertical className="size-4" />
-              <span className="sr-only">Task actions</span>
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onEdit}>
-            <Pencil className="size-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onArchive}>
-            <Archive className="size-4" />
-            Archive
-          </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={onDelete}>
-            <Trash2 className="size-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button variant="ghost" size="icon-sm" onClick={onUnarchive}>
+          <ArchiveRestore className="size-4" />
+          <span className="sr-only">Unarchive</span>
+        </Button>
+        <Button variant="ghost" size="icon-sm" onClick={onDelete}>
+          <Trash2 className="size-4" />
+          <span className="sr-only">Delete permanently</span>
+        </Button>
+      </div>
     </div>
   );
 }

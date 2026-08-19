@@ -29,6 +29,7 @@ export type TaskInput = {
   dueDate?: string | null;
   priority?: Priority;
   status?: Status;
+  archived?: boolean;
 };
 
 async function parseErrorMessage(res: Response, fallback: string) {
@@ -46,10 +47,12 @@ export async function fetchTasks(options: {
   sort?: SortOption;
   tagId?: string | null;
   q?: string;
+  archived?: boolean;
 }): Promise<Task[]> {
   const params = new URLSearchParams({ sort: options.sort ?? "createdAt" });
   if (options.tagId) params.set("tagId", options.tagId);
   if (options.q) params.set("q", options.q);
+  if (options.archived) params.set("archived", "true");
   const res = await fetch(`/api/tasks?${params.toString()}`);
   if (!res.ok) throw new Error(await parseErrorMessage(res, "Failed to load tasks"));
   return res.json();
