@@ -12,10 +12,14 @@ import { TaskFormDialog } from "./task-form-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { TaskSortSelect } from "./task-sort-select";
 import { TagFilterSelect } from "./tag-filter-select";
+import { TaskSearchInput } from "./task-search-input";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 
 export function TasksView() {
   const [sort, setSort] = useState<SortOption>("createdAt");
   const [tagId, setTagId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
@@ -25,8 +29,8 @@ export function TasksView() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["tasks", sort, tagId],
-    queryFn: () => fetchTasks(sort, tagId ?? undefined),
+    queryKey: ["tasks", sort, tagId, debouncedSearch],
+    queryFn: () => fetchTasks({ sort, tagId, q: debouncedSearch }),
   });
 
   function openCreateForm() {
@@ -55,6 +59,8 @@ export function TasksView() {
         </div>
       </div>
 
+      <TaskSearchInput value={search} onChange={setSearch} />
+
       {isLoading && (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-20 w-full rounded-lg" />
@@ -72,12 +78,18 @@ export function TasksView() {
       {!isLoading && !isError && tasks?.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-4 py-12 text-center dark:border-zinc-700">
           <p className="font-medium text-zinc-950 dark:text-zinc-50">
-            {tagId ? "No tasks with this tag" : "No tasks yet"}
+            {debouncedSearch
+              ? "No matching tasks"
+              : tagId
+                ? "No tasks with this tag"
+                : "No tasks yet"}
           </p>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {tagId
-              ? "Try a different tag or clear the filter."
-              : "Create your first task to get started."}
+            {debouncedSearch
+              ? "Try a different search term."
+              : tagId
+                ? "Try a different tag or clear the filter."
+                : "Create your first task to get started."}
           </p>
         </div>
       )}

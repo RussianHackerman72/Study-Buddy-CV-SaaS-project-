@@ -42,9 +42,14 @@ async function parseErrorMessage(res: Response, fallback: string) {
   return fallback;
 }
 
-export async function fetchTasks(sort: SortOption = "createdAt", tagId?: string): Promise<Task[]> {
-  const params = new URLSearchParams({ sort });
-  if (tagId) params.set("tagId", tagId);
+export async function fetchTasks(options: {
+  sort?: SortOption;
+  tagId?: string | null;
+  q?: string;
+}): Promise<Task[]> {
+  const params = new URLSearchParams({ sort: options.sort ?? "createdAt" });
+  if (options.tagId) params.set("tagId", options.tagId);
+  if (options.q) params.set("q", options.q);
   const res = await fetch(`/api/tasks?${params.toString()}`);
   if (!res.ok) throw new Error(await parseErrorMessage(res, "Failed to load tasks"));
   return res.json();

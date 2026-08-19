@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const sort = searchParams.get("sort");
   const tagId = searchParams.get("tagId");
+  const q = searchParams.get("q")?.trim();
 
   const orderBy: Prisma.TaskOrderByWithRelationInput[] =
     sort === "priority"
@@ -28,6 +29,14 @@ export async function GET(request: Request) {
       userId: user.id,
       archived: false,
       ...(tagId ? { tags: { some: { tagId } } } : {}),
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { description: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
     },
     include: { subtasks: true, tags: { include: { tag: true } } },
     orderBy,
