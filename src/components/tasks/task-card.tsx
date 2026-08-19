@@ -29,7 +29,10 @@ export function TaskCard({
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.completed).length;
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div
+      data-testid="task-card"
+      className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950"
+    >
       <div className="flex min-w-0 flex-col gap-1.5">
         <p className="font-medium text-zinc-950 dark:text-zinc-50">{task.title}</p>
         {task.description && (
