@@ -26,7 +26,7 @@ export function TaskSearchInput({
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="absolute top-1/2 right-1 -translate-y-1/2"
+          className="absolute top-0.5 right-1"
           onClick={() => onChange("")}
         >
           <XIcon className="size-3.5" />
