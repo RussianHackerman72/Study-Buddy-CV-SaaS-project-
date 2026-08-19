@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { PlusIcon, ArchiveIcon } from "lucide-react";
+import { PlusIcon, ArchiveIcon, KanbanIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,6 +65,10 @@ export function TasksView() {
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <TagFilterSelect value={tagId} onChange={setTagId} />
           <TaskSortSelect value={sort} onChange={setSort} />
+          <Button variant="outline" nativeButton={false} render={<Link href="/dashboard/board" />}>
+            <KanbanIcon className="size-4" />
+            Board
+          </Button>
           <Button
             variant="outline"
             nativeButton={false}

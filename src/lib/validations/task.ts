@@ -20,8 +20,21 @@ export const updateTaskSchema = z.object({
   archived: z.boolean().optional(),
 });
 
+export const reorderTasksSchema = z.object({
+  updates: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        status: statusEnum,
+        order: z.number().int().min(0),
+      }),
+    )
+    .min(1),
+});
+
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+export type ReorderTasksInput = z.infer<typeof reorderTasksSchema>;
 
 // Client-side form schema: keeps dueDate as a plain string (from an <input type="date">)
 // instead of coercing to Date, so it maps directly onto controlled form fields.

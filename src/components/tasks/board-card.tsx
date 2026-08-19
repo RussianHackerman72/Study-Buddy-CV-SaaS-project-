@@ -1,0 +1,51 @@
+"use client";
+
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import type { Task } from "@/lib/api/tasks";
+import { priorityBadgeClass, priorityLabels } from "./task-labels";
+import { TagBadge } from "./tag-badge";
+
+export function BoardCard({ task, onClick }: { task: Task; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  });
+
+  const completedSubtasks = task.subtasks.filter((subtask) => subtask.completed).length;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      className={`flex cursor-grab flex-col gap-1.5 rounded-lg border border-zinc-200 bg-white p-3 text-left active:cursor-grabbing dark:border-zinc-800 dark:bg-zinc-950 ${
+        isDragging ? "opacity-40" : ""
+      }`}
+    >
+      <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{task.title}</p>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge className={priorityBadgeClass[task.priority]}>{priorityLabels[task.priority]}</Badge>
+        {task.dueDate && (
+          <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-500">
+            <CalendarIcon className="size-3" />
+            {format(new Date(task.dueDate), "MMM d")}
+          </span>
+        )}
+        {task.subtasks.length > 0 && (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">
+            {completedSubtasks}/{task.subtasks.length}
+          </span>
+        )}
+        {task.tags.map(({ tag }) => (
+          <TagBadge key={tag.id} name={tag.name} color={tag.color} />
+        ))}
+      </div>
+    </div>
+  );
+}
