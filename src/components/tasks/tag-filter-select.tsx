@@ -29,7 +29,7 @@ export function TagFilterSelect({
       value={value ?? ALL_TAGS}
       onValueChange={(next: string | null) => onChange(next === ALL_TAGS ? null : next)}
     >
-      <SelectTrigger className="w-40">
+      <SelectTrigger className="w-32">
         <SelectValue>
           {(val: string) =>
             val === ALL_TAGS ? "All tags" : (tags.find((tag) => tag.id === val)?.name ?? "All tags")
