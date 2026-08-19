@@ -5,6 +5,7 @@ import { ArchiveRestore, Trash2, CalendarIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Task } from "@/lib/api/tasks";
 import { priorityBadgeClass, priorityLabels, statusBadgeClass, statusLabels } from "./task-labels";
 import { TagBadge } from "./tag-badge";
@@ -45,14 +46,20 @@ export function ArchivedTaskCard({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <Button variant="ghost" size="icon-sm" onClick={onUnarchive}>
-          <ArchiveRestore className="size-4" />
-          <span className="sr-only">Unarchive</span>
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={onDelete}>
-          <Trash2 className="size-4" />
-          <span className="sr-only">Delete permanently</span>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={onUnarchive} />}>
+            <ArchiveRestore className="size-4" />
+            <span className="sr-only">Unarchive</span>
+          </TooltipTrigger>
+          <TooltipContent>Restore task</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={onDelete} />}>
+            <Trash2 className="size-4" />
+            <span className="sr-only">Delete permanently</span>
+          </TooltipTrigger>
+          <TooltipContent>Delete permanently</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
