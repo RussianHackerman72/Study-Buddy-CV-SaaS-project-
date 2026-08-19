@@ -59,10 +59,10 @@ export function TasksView() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-6 py-8">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+        <h1 className="shrink-0 text-xl font-semibold tracking-tight whitespace-nowrap text-zinc-950 dark:text-zinc-50">
           Your tasks
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <TagFilterSelect value={tagId} onChange={setTagId} />
           <TaskSortSelect value={sort} onChange={setSort} />
           <Button
