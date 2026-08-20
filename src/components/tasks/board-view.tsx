@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closestCorners,
+  pointerWithin,
   DndContext,
   DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -61,6 +63,18 @@ function findColumn(id: string, board: Board): Status | null {
   }
   return null;
 }
+
+// closestCorners alone compares the whole dragged card's bounding box against
+// every droppable's corners -- since the board columns span the full board
+// height, their corners are almost always nearer than the small, remote
+// archive/trash icons, so those targets would basically never win. Checking
+// the actual pointer position first fixes that for small targets, while
+// still falling back to closestCorners for the column drop zones.
+const collisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) return pointerCollisions;
+  return closestCorners(args);
+};
 
 export function BoardView() {
   const queryClient = useQueryClient();
@@ -291,7 +305,7 @@ export function BoardView() {
       {!isLoading && !isError && (
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCorners}
+          collisionDetection={collisionDetection}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
