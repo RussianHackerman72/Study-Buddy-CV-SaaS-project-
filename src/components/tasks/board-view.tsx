@@ -264,29 +264,23 @@ export function BoardView() {
     setFormOpen(true);
   }
 
+  const backButton = (
+    <Button variant="ghost" size="icon-sm" nativeButton={false} render={<Link href="/dashboard" />}>
+      <ArrowLeftIcon className="size-4" />
+      <span className="sr-only">Back to tasks</span>
+    </Button>
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {(isLoading || isError) && (
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            nativeButton={false}
-            render={<Link href="/dashboard" />}
-          >
-            <ArrowLeftIcon className="size-4" />
-            <span className="sr-only">Back to tasks</span>
-          </Button>
+          {backButton}
           <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
             Board
           </h1>
         </div>
-
-        <div className="flex items-center gap-2">
-          <BoardDropZone id={ARCHIVE_ZONE} icon={ArchiveIcon} label="Archive" />
-          <BoardDropZone id={TRASH_ZONE} icon={Trash2} label="Delete" variant="destructive" />
-        </div>
-      </div>
+      )}
 
       {isLoading && (
         <div className="flex gap-3">
@@ -303,6 +297,11 @@ export function BoardView() {
       )}
 
       {!isLoading && !isError && (
+        // The archive/trash drop zones must be inside the same DndContext as the
+        // columns -- useDroppable only registers with the nearest ancestor
+        // DndContext, so if they lived outside it (as siblings in the header)
+        // they were never even candidates for collision detection, regardless
+        // of which algorithm was used.
         <DndContext
           sensors={sensors}
           collisionDetection={collisionDetection}
@@ -310,6 +309,20 @@ export function BoardView() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {backButton}
+              <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+                Board
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <BoardDropZone id={ARCHIVE_ZONE} icon={ArchiveIcon} label="Archive" />
+              <BoardDropZone id={TRASH_ZONE} icon={Trash2} label="Delete" variant="destructive" />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-4 sm:flex-row sm:overflow-x-auto">
             {columns.map((status) => (
               <BoardColumn
