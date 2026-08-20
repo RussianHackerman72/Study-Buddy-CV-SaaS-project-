@@ -56,7 +56,9 @@ export function BoardView() {
     queryFn: () => fetchTasks({ sort: "createdAt", tagId: null, q: "" }),
   });
 
-  const [board, setBoard] = useState<Board>({ TODO: [], IN_PROGRESS: [], DONE: [] });
+  const [board, setBoard] = useState<Board>(() =>
+    tasks ? groupByStatus(tasks) : { TODO: [], IN_PROGRESS: [], DONE: [] },
+  );
   const [syncedTasks, setSyncedTasks] = useState(tasks);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
