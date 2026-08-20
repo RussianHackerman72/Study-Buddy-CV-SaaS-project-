@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,18 +16,36 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, ArchiveIcon, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchTasks, reorderTasks, type Status, type Task } from "@/lib/api/tasks";
+import {
+  fetchTasks,
+  updateTask,
+  deleteTask,
+  reorderTasks,
+  type Status,
+  type Task,
+} from "@/lib/api/tasks";
 import { BoardColumn } from "./board-column";
 import { BoardCard } from "./board-card";
+import { BoardDropZone } from "./board-drop-zone";
 import { TaskFormDialog } from "./task-form-dialog";
 
 const columns: Status[] = ["TODO", "IN_PROGRESS", "DONE"];
+const ARCHIVE_ZONE = "archive-zone";
+const TRASH_ZONE = "trash-zone";
+const UNDO_WINDOW_MS = 5000;
 
 type Board = Record<Status, Task[]>;
+
+type PendingDelete = {
+  task: Task;
+  status: Status;
+  index: number;
+  timeoutId: ReturnType<typeof setTimeout>;
+};
 
 function groupByStatus(tasks: Task[]): Board {
   const board: Board = { TODO: [], IN_PROGRESS: [], DONE: [] };
@@ -63,7 +81,9 @@ export function BoardView() {
   const [syncedTasks, setSyncedTasks] = useState(tasks);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const [createStatus, setCreateStatus] = useState<Status>("TODO");
   const [formOpen, setFormOpen] = useState(false);
+  const pendingDeletesRef = useRef<Map<string, PendingDelete>>(new Map());
 
   // Reset local board state whenever fresh data arrives from the server, without
   // running the sync in an effect (see https://react.dev/learn/you-might-not-need-an-effect).
@@ -72,16 +92,82 @@ export function BoardView() {
     setBoard(groupByStatus(tasks));
   }
 
+  function resetBoardFromServer() {
+    if (tasks) setBoard(groupByStatus(tasks));
+  }
+
   const reorderMutation = useMutation({
     mutationFn: reorderTasks,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
     onError: (error: Error) => {
       toast.error(error.message);
-      if (tasks) setBoard(groupByStatus(tasks));
+      resetBoardFromServer();
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: (task: Task) => updateTask(task.id, { archived: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task archived");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+      resetBoardFromServer();
     },
   });
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  function removeFromBoard(task: Task) {
+    setBoard((prev) => ({
+      ...prev,
+      [task.status]: prev[task.status].filter((item) => item.id !== task.id),
+    }));
+  }
+
+  function handleArchive(task: Task) {
+    removeFromBoard(task);
+    archiveMutation.mutate(task);
+  }
+
+  // Soft delete: remove from view immediately and give the user a few seconds to
+  // undo before the real DELETE call fires, instead of a blocking confirm dialog.
+  function handleDelete(task: Task) {
+    const status = task.status;
+    const index = board[status].findIndex((item) => item.id === task.id);
+    removeFromBoard(task);
+
+    const timeoutId = setTimeout(() => {
+      pendingDeletesRef.current.delete(task.id);
+      deleteTask(task.id)
+        .then(() => queryClient.invalidateQueries({ queryKey: ["tasks"] }))
+        .catch((error: Error) => {
+          toast.error(error.message);
+          resetBoardFromServer();
+        });
+    }, UNDO_WINDOW_MS);
+
+    pendingDeletesRef.current.set(task.id, { task, status, index, timeoutId });
+
+    toast("Task deleted", {
+      duration: UNDO_WINDOW_MS,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const pending = pendingDeletesRef.current.get(task.id);
+          if (!pending) return;
+          clearTimeout(pending.timeoutId);
+          pendingDeletesRef.current.delete(task.id);
+          setBoard((prev) => {
+            const items = [...prev[pending.status]];
+            items.splice(Math.min(pending.index, items.length), 0, pending.task);
+            return { ...prev, [pending.status]: items };
+          });
+        },
+      },
+    });
+  }
 
   function handleDragStart(event: DragStartEvent) {
     const column = findColumn(event.active.id as string, board);
@@ -120,6 +206,16 @@ export function BoardView() {
     if (!over) return;
     const activeId = active.id as string;
     const overId = over.id as string;
+
+    if (overId === ARCHIVE_ZONE || overId === TRASH_ZONE) {
+      const column = findColumn(activeId, board);
+      const task = column ? board[column].find((item) => item.id === activeId) : undefined;
+      if (!task) return;
+      if (overId === ARCHIVE_ZONE) handleArchive(task);
+      else handleDelete(task);
+      return;
+    }
+
     const activeColumn = findColumn(activeId, board);
     const overColumn = findColumn(overId, board);
     if (!activeColumn || !overColumn) return;
@@ -148,21 +244,34 @@ export function BoardView() {
     setFormOpen(true);
   }
 
+  function openCreateForm(status: Status) {
+    setEditingTask(undefined);
+    setCreateStatus(status);
+    setFormOpen(true);
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          nativeButton={false}
-          render={<Link href="/dashboard" />}
-        >
-          <ArrowLeftIcon className="size-4" />
-          <span className="sr-only">Back to tasks</span>
-        </Button>
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-          Board
-        </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+          >
+            <ArrowLeftIcon className="size-4" />
+            <span className="sr-only">Back to tasks</span>
+          </Button>
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+            Board
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <BoardDropZone id={ARCHIVE_ZONE} icon={ArchiveIcon} label="Archive" />
+          <BoardDropZone id={TRASH_ZONE} icon={Trash2} label="Delete" variant="destructive" />
+        </div>
       </div>
 
       {isLoading && (
@@ -194,16 +303,31 @@ export function BoardView() {
                 status={status}
                 tasks={board[status]}
                 onCardClick={openEditForm}
+                onAddTask={openCreateForm}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
               />
             ))}
           </div>
           <DragOverlay>
-            {activeTask && <BoardCard task={activeTask} onClick={() => {}} />}
+            {activeTask && (
+              <BoardCard
+                task={activeTask}
+                onClick={() => {}}
+                onArchive={() => {}}
+                onDelete={() => {}}
+              />
+            )}
           </DragOverlay>
         </DndContext>
       )}
 
-      <TaskFormDialog open={formOpen} onOpenChange={setFormOpen} task={editingTask} />
+      <TaskFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        task={editingTask}
+        defaultStatus={createStatus}
+      />
     </div>
   );
 }

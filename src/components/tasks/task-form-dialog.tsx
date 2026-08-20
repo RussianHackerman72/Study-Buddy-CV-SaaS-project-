@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { taskFormSchema, type TaskFormValues } from "@/lib/validations/task";
-import { createTask, updateTask, type Task } from "@/lib/api/tasks";
+import { createTask, updateTask, type Status, type Task } from "@/lib/api/tasks";
 import { priorityLabels, statusLabels } from "./task-labels";
 import { SubtaskSection } from "./subtask-section";
 import { TaskTagsSection } from "./task-tags-section";
@@ -36,18 +36,21 @@ function toDateInputValue(dueDate: string | null) {
   return dueDate.slice(0, 10);
 }
 
-function emptyValues(): TaskFormValues {
-  return { title: "", description: "", dueDate: "", priority: "MEDIUM", status: "TODO" };
+function emptyValues(status: Status): TaskFormValues {
+  return { title: "", description: "", dueDate: "", priority: "MEDIUM", status };
 }
 
 export function TaskFormDialog({
   open,
   onOpenChange,
   task,
+  defaultStatus = "TODO",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: Task;
+  /** Status to pre-fill when creating a task (ignored when editing). */
+  defaultStatus?: Status;
 }) {
   const isEditing = Boolean(task);
   const queryClient = useQueryClient();
@@ -60,7 +63,7 @@ export function TaskFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: emptyValues(),
+    defaultValues: emptyValues(defaultStatus),
   });
 
   useEffect(() => {
@@ -74,9 +77,9 @@ export function TaskFormDialog({
             priority: task.priority,
             status: task.status,
           }
-        : emptyValues(),
+        : emptyValues(defaultStatus),
     );
-  }, [open, task, reset]);
+  }, [open, task, defaultStatus, reset]);
 
   const mutation = useMutation({
     mutationFn: async (values: TaskFormValues) => {

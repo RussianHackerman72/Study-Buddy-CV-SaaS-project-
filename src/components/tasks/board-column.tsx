@@ -2,7 +2,9 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { PlusIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import type { Task, Status } from "@/lib/api/tasks";
 import { statusDotClass, statusLabels } from "./task-labels";
 import { BoardCard } from "./board-card";
@@ -11,10 +13,16 @@ export function BoardColumn({
   status,
   tasks,
   onCardClick,
+  onAddTask,
+  onArchive,
+  onDelete,
 }: {
   status: Status;
   tasks: Task[];
   onCardClick: (task: Task) => void;
+  onAddTask: (status: Status) => void;
+  onArchive: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }) {
   const { setNodeRef } = useDroppable({ id: status });
 
@@ -28,6 +36,15 @@ export function BoardColumn({
         <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
           {tasks.length}
         </span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="ml-auto"
+          onClick={() => onAddTask(status)}
+        >
+          <PlusIcon className="size-4" />
+          <span className="sr-only">Add task to {statusLabels[status]}</span>
+        </Button>
       </div>
 
       <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
@@ -49,7 +66,13 @@ export function BoardColumn({
             </p>
           )}
           {tasks.map((task) => (
-            <BoardCard key={task.id} task={task} onClick={() => onCardClick(task)} />
+            <BoardCard
+              key={task.id}
+              task={task}
+              onClick={() => onCardClick(task)}
+              onArchive={() => onArchive(task)}
+              onDelete={() => onDelete(task)}
+            />
           ))}
         </div>
       </SortableContext>

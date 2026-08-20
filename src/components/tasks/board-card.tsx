@@ -3,14 +3,38 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { format } from "date-fns";
-import { CalendarIcon, GripVerticalIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  GripVerticalIcon,
+  MoreVertical,
+  Pencil,
+  Archive,
+  Trash2,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Task } from "@/lib/api/tasks";
 import { priorityBadgeClass, priorityLabels, priorityStripeClass } from "./task-labels";
 import { TagBadge } from "./tag-badge";
 
-export function BoardCard({ task, onClick }: { task: Task; onClick: () => void }) {
+export function BoardCard({
+  task,
+  onClick,
+  onArchive,
+  onDelete,
+}: {
+  task: Task;
+  onClick: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -32,7 +56,43 @@ export function BoardCard({ task, onClick }: { task: Task; onClick: () => void }
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{task.title}</p>
-        <GripVerticalIcon className="size-4 shrink-0 text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-zinc-700" />
+        <div className="flex shrink-0 items-center gap-0.5">
+          <GripVerticalIcon className="size-4 text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-zinc-700" />
+          {/*
+            Drag is the primary way to archive/delete on the board, but touch
+            drag targets are fiddly and there's no hover state on mobile, so
+            this menu is a fallback that doesn't depend on either.
+          */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
+                />
+              }
+            >
+              <MoreVertical className="size-4" />
+              <span className="sr-only">Task actions</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onClick}>
+                <Pencil className="size-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onArchive}>
+                <Archive className="size-4" />
+                Archive
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
