@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  closestCorners,
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -181,11 +182,12 @@ export function BoardView() {
       {!isLoading && !isError && (
         <DndContext
           sensors={sensors}
+          collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:overflow-x-auto">
+          <div className="flex flex-col gap-4 sm:flex-row sm:overflow-x-auto">
             {columns.map((status) => (
               <BoardColumn
                 key={status}

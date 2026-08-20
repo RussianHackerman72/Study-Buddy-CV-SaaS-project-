@@ -31,9 +31,17 @@ export function BoardColumn({
       </div>
 
       <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        {/*
+          flex-1 (with the parent row stretched via items-stretch) makes every
+          column's drop zone span the full board height, not just its own
+          content height. Otherwise a short/empty column has a tiny droppable
+          rect, so dragging a card from low in a long column into it never
+          registers as "over" that column until you drag back up to where its
+          rect actually is.
+        */}
         <div
           ref={setNodeRef}
-          className="flex min-h-24 flex-col gap-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900/50"
+          className="flex min-h-24 flex-1 flex-col gap-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900/50"
         >
           {tasks.length === 0 && (
             <p className="px-2 py-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
